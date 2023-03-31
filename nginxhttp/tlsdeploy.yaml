@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginxtls
+spec:
+  selector:
+    matchLabels:
+      run: nginxtls
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: nginxtls
+    spec:
+      containers:
+      - name: nginxtls
+        image: harbor.wpax.intel.com/dev/manjeets/async-qat-nginx-standalone
+        #image: harbor.wpax.intel.com/dev/manjeets/openresty-qat-hw-async
+        #image: harbor.wpax.intel.com/dev/openresty-hw-qat
+        imagePullPolicy: IfNotPresent
+        #command: [ "/bin/bash", "-c", "--" ]
+        volumeMounts:
+        - name: nginx-config-volume
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+        command: [ "/bin/bash", "-c", "nginx -c /etc/nginx/nginx.conf -g 'daemon off;'" ]
+        #command: [ "/bin/bash", "-c", "--" ]
+        args: [ "while true; do sleep 300000; done;" ]
+      volumes:
+      - name: nginx-config-volume
+        configMap:
+          name: nginx-config
+      nodeSelector:
+         kubernetes.io/hostname: fmx190
+      hostname: nginxtls
+      restartPolicy: Always

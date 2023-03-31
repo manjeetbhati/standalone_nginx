@@ -1,0 +1,4 @@
+version: '3'
+services:
+  myapp:
+    image: harbor.wpax.intel.com/dev/manjeets/async-qat-nginx-standalone

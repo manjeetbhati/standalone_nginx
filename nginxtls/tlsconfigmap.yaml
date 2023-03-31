@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  nginx.conf: |
+    user root;
+    worker_processes 128;
+    worker_priority 0;
+    worker_rlimit_nofile 1000000;
+
+    events {
+       use epoll;
+       worker_connections 8192;
+       multi_accept on;
+       accept_mutex on;
+     }
+
+    http {
+      include /usr/share/nginx/conf/mime.types;
+      default_type  application/octet-stream;
+      limit_conn_zone $server_name zone=perserver:3072000;
+      sendfile on;
+      access_log off;
+
+      server {
+         listen 8080 ssl reuseport backlog=131072 so_keepalive=on rcvbuf=65536 sndbuf=65536;
+         server_name  localhost;
+         sendfile on;
+         sendfile_max_chunk 524288;
+         keepalive_timeout 0s;
+         tcp_nopush on;
+         tcp_nodelay on;
+         ssl_verify_client off;
+         #keepalive_requests 100000;
+         ssl_session_tickets off;
+         access_log off;
+         limit_conn perserver 65500;
+         ssl_buffer_size 65536;
+         ssl_session_timeout 300s;
+         ssl_protocols TLSv1.3;
+         # TLSv1.2 ciphers TLS_CHACHA20_POLY1305_SHA256, TLS_AES_128_GCM_SHA256
+         #ssl_ciphers ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES256-SHA:AES128-SHA:AES256-SHA:AES128-GCM-SHA256:TLS_AES_128_GCM_SHA256i:TLS_AES_256_GCM_SHA384;
+         #ssl_ciphers ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES256-SHA:AES128-SHA:AES256-SHA:AES128-GCM-SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384;
+         ssl_ciphers ALL;
+         ssl_prefer_server_ciphers on;
+         ssl_certificate      /keys/server.crt;
+         ssl_certificate_key  /keys/server.key;
+
+         location / {
+
+            #root /usr/share/nginx/html;
+            root html;
+            index index.html index.htm;
+
+         }
+
+       }
+
+    }
